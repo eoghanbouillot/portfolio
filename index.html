@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eoghan - Portfolio</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="scanlines"></div>
+    <canvas id="matrix"></canvas>
+    
+    <div class="container">
+        <header class="header">
+            <div class="glitch-text" data-text="EOGHAN">EOGHAN</div>
+            <p class="subtitle">/ 17 ANS / FRANCE / ÉTUDIANT</p>
+        </header>
+        
+        <main class="content">
+            <section class="card about-card">
+                <div class="card-header">
+                    <span class="terminal-prompt">root@eoghan:~$</span> whoami
+                </div>
+                <div class="card-body">
+                    <p class="info-line"><span class="label">Nom:</span> Eoghan</p>
+                    <p class="info-line"><span class="label">Âge:</span> 17 ans</p>
+                    <p class="info-line"><span class="label">Localisation:</span> 🇫🇷 France</p>
+                    <p class="info-line"><span class="label">Statut:</span> Lycéen</p>
+                    <p class="info-line"><span class="label">Vibe:</span> Tech & Gaming</p>
+                </div>
+            </section>
+            
+            <section class="card interests-card">
+                <div class="card-header">
+                    <span class="terminal-prompt">root@eoghan:~$</span> ls -la /interests
+                </div>
+                <div class="card-body">
+                    <div class="interest-grid">
+                        <div class="interest-item">
+                            <span class="icon">🎮</span>
+                            <span class="text">Gaming</span>
+                        </div>
+                        <div class="interest-item">
+                            <span class="icon">💻</span>
+                            <span class="text">Tech</span>
+                        </div>
+                        <div class="interest-item">
+                            <span class="icon">🎵</span>
+                            <span class="text">Musique</span>
+                        </div>
+                        <div class="interest-item">
+                            <span class="icon">🌐</span>
+                            <span class="text">Web</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="card status-card">
+                <div class="card-header">
+                    <span class="terminal-prompt">root@eoghan:~$</span> status --current
+                </div>
+                <div class="card-body">
+                    <div class="status-bar">
+                        <div class="status-item">
+                            <span class="status-label">MOTIVATION</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 85%"></div>
+                            </div>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">SKILL_LEVEL</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 70%"></div>
+                            </div>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">CREATIVITY</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 90%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="card social-card">
+                <div class="card-header">
+                    <span class="terminal-prompt">root@eoghan:~$</span> cat /socials.txt
+                </div>
+                <div class="card-body">
+                    <div class="social-links">
+                        <a href="https://discord.com/users/eoghan1327" class="social-link" target="_blank" rel="noopener noreferrer">
+                            <span class="social-icon">💬</span>
+                            <span class="social-text">Discord</span>
+                        </a>
+                        <a href="mailto:eoghanbouillot@gmail.com" class="social-link">
+                            <span class="social-icon">📧</span>
+                            <span class="social-text">Email</span>
+                        </a>
+                        <a href="https://github.com/eoghanbouillot" class="social-link" target="_blank" rel="noopener noreferrer">
+                            <span class="social-icon">🐙</span>
+                            <span class="social-text">GitHub</span>
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <footer class="footer">
+            <p class="footer-text">
+                <span class="blinking">█</span> System online since 2007
+            </p>
+        </footer>
+    </div>
+    
+    <div class="cursor-trail"></div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
