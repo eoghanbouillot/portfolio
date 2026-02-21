@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eoghan | Cyber Engineer in Progress</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts : JetBrains Mono + Orbitron -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
+
+  <!-- Font Awesome pour les icônes -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <script>
+    // Configuration Tailwind custom
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            emerald: { 400: '#34d399', 500: '#10b981', 600: '#059669' },
+            cyber: {
+              green:  '#00ff9d',
+              blue:   '#00d4ff',
+              dark:   '#080c10',
+              card:   '#0d1117',
+              border: '#1a2332',
+              dim:    '#8b949e',
+            }
+          },
+          fontFamily: {
+            mono:    ['"JetBrains Mono"', 'monospace'],
+            display: ['Orbitron', 'monospace'],
+          },
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* ── Variables & reset ── */
+    :root {
+      --green:  #00ff9d;
+      --blue:   #00d4ff;
+      --dark:   #080c10;
+      --card:   #0d1117;
+      --border: #1a2332;
+      --dim:    #8b949e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { background: var(--dark); }
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--dark);
+      color: #c9d1d9;
+      overflow-x: hidden;
+    }
+
+    /* ── Scanline overlay ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 3px,
+        rgba(0,0,0,.15) 3px,
+        rgba(0,0,0,.15) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── Noise grain ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: .04;
+      pointer-events: none;
+      z-index: 9998;
+    }
+
+    /* ── Grid background ── */
+    .grid-bg {
+      background-image:
+        linear-gradient(rgba(0,255,157,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,255,157,.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    /* ── Glow utilities ── */
+    .glow-green  { text-shadow: 0 0 10px var(--green), 0 0 30px rgba(0,255,157,.4); }
+    .glow-blue   { text-shadow: 0 0 10px var(--blue),  0 0 30px rgba(0,212,255,.4); }
+    .border-glow { box-shadow: 0 0 0 1px var(--border), 0 0 20px rgba(0,255,157,.05); }
+    .card-hover  { transition: all .3s ease; }
+    .card-hover:hover {
+      border-color: rgba(0,255,157,.4) !important;
+      box-shadow: 0 0 30px rgba(0,255,157,.1), 0 0 0 1px rgba(0,255,157,.2);
+      transform: translateY(-2px);
+    }
+
+    /* ── Terminal ── */
+    .terminal-window {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0,0,0,.8), 0 0 0 1px var(--border), 0 0 80px rgba(0,255,157,.05);
+    }
+    .terminal-bar {
+      background: #161b22;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot-r { background: #ff5f57; }
+    .dot-y { background: #febc2e; }
+    .dot-g { background: #28c840; }
+    .terminal-title {
+      font-size: 11px;
+      color: var(--dim);
+      margin-left: auto;
+      margin-right: auto;
+      letter-spacing: .1em;
+    }
+    .terminal-body {
+      padding: 20px;
+      font-size: 14px;
+      line-height: 1.8;
+      min-height: 220px;
+    }
+    .prompt { color: var(--green); }
+    .cmd    { color: #c9d1d9; }
+    .out    { color: var(--dim); }
+    .out span.hi { color: var(--blue); }
+    .cursor {
+      display: inline-block;
+      width: 8px;
+      height: 15px;
+      background: var(--green);
+      vertical-align: middle;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* ── Typing animation helpers ── */
+    .line { opacity: 0; }
+    .line.visible { opacity: 1; }
+
+    /* ── Badge ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      border: 1px solid;
+    }
+
+    /* ── Roadmap ── */
+    .road-step {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .road-node {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      border: 2px solid;
+      position: relative;
+      z-index: 1;
+    }
+    .road-connector {
+      flex: 1;
+      height: 2px;
+      background: linear-gradient(90deg, var(--green), var(--blue));
+      position: relative;
+      overflow: hidden;
+    }
+    .road-connector::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 50%;
+      height: 100%;
+      background: rgba(255,255,255,.4);
+      animation: flow 2s linear infinite;
+    }
+    @keyframes flow { to { left: 200%; } }
+
+    /* ── Skill bar ── */
+    .skill-bar-track {
+      background: #1a2332;
+      border-radius: 2px;
+      height: 6px;
+      overflow: hidden;
+    }
+    .skill-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: linear-gradient(90deg, var(--green), var(--blue));
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 1.2s cubic-bezier(.4,0,.2,1);
+    }
+    .skill-bar-fill.animated { transform: scaleX(1); }
+
+    /* ── Sections ── */
+    section { padding: 80px 0; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar       { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--dark); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--green); }
+
+    /* ── Navbar ── */
+    nav {
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Fade-in on scroll ── */
+    .fade-in { opacity: 0; transform: translateY(30px); transition: opacity .6s ease, transform .6s ease; }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── CTF card ── */
+    .ctf-card {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px;
+      background: rgba(13,17,23,.8);
+      transition: all .3s ease;
+    }
+    .ctf-card:hover {
+      border-color: rgba(0,212,255,.4);
+      box-shadow: 0 0 20px rgba(0,212,255,.08);
+    }
+  </style>
+</head>
+
+<body class="grid-bg">
+
+  <!-- ══════════════════════════════════════════
+       NAVIGATION
+  ══════════════════════════════════════════ -->
+  <nav class="fixed top-0 left-0 right-0 z-50" style="background:rgba(8,12,16,.85);">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <!-- Logo -->
+      <span class="font-display font-bold text-sm tracking-widest" style="color:var(--green);">
+        &lt;EOGHAN /&gt;
+      </span>
+      <!-- Nav links -->
+      <ul class="hidden md:flex items-center gap-8 text-xs tracking-widest" style="color:var(--dim);">
+        <li><a href="#hero"     class="hover:text-white transition-colors duration-200">TERMINAL</a></li>
+        <li><a href="#ctf"      class="hover:text-white transition-colors duration-200">CTF</a></li>
+        <li><a href="#roadmap"  class="hover:text-white transition-colors duration-200">ROADMAP</a></li>
+        <li><a href="#skills"   class="hover:text-white transition-colors duration-200">SKILLS</a></li>
+        <li>
+          <a href="lab.html"
+             class="flex items-center gap-2 px-4 py-2 border rounded text-xs tracking-widest transition-all duration-200"
+             style="border-color:#ff4757;color:#ff4757;"
+             onmouseover="this.style.background='rgba(255,71,87,.1)'"
+             onmouseout="this.style.background='transparent'">
+            <i class="fa-solid fa-terminal text-xs"></i>PENTEST LAB
+          </a>
+        </li>
+        <li>
+          <a href="https://github.com/" target="_blank"
+             class="px-4 py-2 border rounded text-xs tracking-widest transition-all duration-200"
+             style="border-color:var(--green);color:var(--green);"
+             onmouseover="this.style.background='rgba(0,255,157,.1)'"
+             onmouseout="this.style.background='transparent'">
+            GITHUB
+          </a>
+        </li>
+      </ul>
+      <!-- Mobile menu button -->
+      <button id="menuBtn" class="md:hidden text-gray-400" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
+        <i class="fa fa-bars"></i>
+      </button>
+    </div>
+    <!-- Mobile menu -->
+    <div id="mobileMenu" class="hidden md:hidden px-6 pb-4 flex flex-col gap-4 text-xs tracking-widest" style="color:var(--dim);">
+      <a href="#hero"    class="hover:text-white">TERMINAL</a>
+      <a href="#ctf"     class="hover:text-white">CTF</a>
+      <a href="#roadmap" class="hover:text-white">ROADMAP</a>
+      <a href="#skills"  class="hover:text-white">SKILLS</a>
+      <a href="lab.html" style="color:#ff4757;" class="flex items-center gap-2">
+        <i class="fa-solid fa-terminal"></i>PENTEST LAB
+      </a>
+      <a href="https://github.com/" target="_blank" style="color:var(--green);">GITHUB</a>
+    </div>
+  </nav>
+
+
+  <!-- ══════════════════════════════════════════
+       HERO — SECTION TERMINAL
+  ══════════════════════════════════════════ -->
+  <section id="hero" class="min-h-screen flex flex-col items-center justify-center px-4 pt-20">
+    <div class="max-w-3xl w-full mx-auto">
+
+      <!-- Titre -->
+      <div class="text-center mb-10">
+        <p class="text-xs tracking-widest mb-3" style="color:var(--green);">// INITIATING HANDSHAKE...</p>
+        <h1 class="font-display font-black text-4xl md:text-6xl tracking-tight mb-4 glow-green" style="color:var(--green);">
+          EOGHAN
+        </h1>
+        <p class="text-sm md:text-base tracking-widest" style="color:var(--dim);">
+          Cyber&nbsp;Engineer&nbsp;·&nbsp;CTF&nbsp;Player&nbsp;·&nbsp;Loire-Atlantique
+        </p>
+      </div>
+
+      <!-- Fenêtre terminal -->
+      <div class="terminal-window">
+        <div class="terminal-bar">
+          <span class="dot dot-r"></span>
+          <span class="dot dot-y"></span>
+          <span class="dot dot-g"></span>
+          <span class="terminal-title">eoghan@kali:~</span>
+        </div>
+        <div class="terminal-body" id="termBody">
+          <!-- Les lignes sont injectées par JS -->
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="flex justify-center gap-4 mt-10 flex-wrap">
+        <a href="#ctf" class="px-6 py-3 font-display text-xs tracking-widest font-bold rounded transition-all duration-300"
+           style="background:var(--green);color:#080c10;"
+           onmouseover="this.style.boxShadow='0 0 30px rgba(0,255,157,.5)'"
+           onmouseout="this.style.boxShadow='none'">
+          <i class="fa-solid fa-flag mr-2"></i>PALMARÈS CTF
+        </a>
+        <a href="#roadmap" class="px-6 py-3 font-display text-xs tracking-widest font-bold rounded border transition-all duration-300"
+           style="border-color:var(--blue);color:var(--blue);"
+           onmouseover="this.style.boxShadow='0 0 30px rgba(0,212,255,.3)'"
+           onmouseout="this.style.boxShadow='none'">
+          <i class="fa-solid fa-route mr-2"></i>ROADMAP
+        </a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SECTION CTF / PALMARÈS
+  ══════════════════════════════════════════ -->
+  <section id="ctf" class="px-4">
+    <div class="max-w-5xl mx-auto">
+
+      <!-- Header -->
+      <div class="fade-in mb-14 text-center">
+        <p class="text-xs tracking-widest mb-2" style="color:var(--green);">// CAPTURE THE FLAG</p>
+        <h2 class="font-display font-bold text-3xl md:text-4xl text-white mb-4">
+          PALMARÈS <span style="color:var(--green);">CTF</span>
+        </h2>
+        <p class="text-sm max-w-xl mx-auto" style="color:var(--dim);">
+          Compétiteur actif en CTF, fier membre d'une team française
+          classée <span class="font-bold" style="color:var(--blue);">Top 5 France</span> sur CTFtime.
+        </p>
+      </div>
+
+      <!-- Stat badge -->
+      <div class="fade-in flex justify-center mb-12">
+        <div class="inline-flex items-center gap-4 px-6 py-4 rounded-lg"
+             style="background:#0d1117;border:1px solid rgba(0,212,255,.3);box-shadow:0 0 30px rgba(0,212,255,.08);">
+          <div class="text-center">
+            <div class="font-display font-black text-3xl" style="color:var(--blue);">TOP 5</div>
+            <div class="text-xs tracking-widest mt-1" style="color:var(--dim);">FRANCE</div>
+          </div>
+          <div style="width:1px;height:40px;background:var(--border);"></div>
+          <div class="text-center">
+            <div class="font-display font-black text-3xl" style="color:var(--green);">6+</div>
+            <div class="text-xs tracking-widest mt-1" style="color:var(--dim);">CTF JOUÉS</div>
+          </div>
+          <div style="width:1px;height:40px;background:var(--border);"></div>
+          <div class="text-center">
+            <i class="fa-solid fa-ranking-star text-2xl" style="color:var(--green);"></i>
+            <div class="text-xs tracking-widest mt-1" style="color:var(--dim);">CTFtime</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grille CTF -->
+      <div class="fade-in grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-14">
+
+        <!-- NoBrackets -->
+        <div class="ctf-card">
+          <div class="flex items-center justify-between mb-3">
+            <span class="font-display text-sm font-bold text-white">NoBrackets</span>
+            <i class="fa-solid fa-terminal text-xs" style="color:var(--green);"></i>
+          </div>
+          <p class="text-xs" style="color:var(--dim);">CTF académique de niveau intermédiaire — épreuves variées.</p>
+          <div class="flex flex-wrap gap-2 mt-3">
+            <span class="badge" style="background:rgba(0,255,157,.08);border-color:rgba(0,255,157,.3);color:var(--green);">
+              <i class="fa-solid fa-globe text-xs"></i> Web
+            </span>
+            <span class="badge" style="background:rgba(0,212,255,.08);border-color:rgba(0,212,255,.3);color:var(--blue);">
+              <i class="fa-solid fa-microscope text-xs"></i> Forensics
+            </span>
+          </div>
+        </div>
+
+        <!-- CyberNinja -->
+        <div class="ctf-card">
+          <div class="flex items-center justify-between mb-3">
+            <span class="font-display text-sm font-bold text-white">CyberNinja</span>
+            <i class="fa-solid fa-user-ninja text-xs" style="color:var(--blue);"></i>
+          </div>
+          <p class="text-xs" style="color:var(--dim);">Épreuves orientées offensif — Reverse & exploitation.</p>
+          <div class="flex flex-wrap gap-2 mt-3">
+            <span class="badge" style="background:rgba(168,85,247,.08);border-color:rgba(168,85,247,.3);color:#a855f7;">
+              <i class="fa-solid fa-code text-xs"></i> Reverse
+            </span>
+            <span class="badge" style="background:rgba(251,146,60,.08);border-color:rgba(251,146,60,.3);color:#fb923c;">
+              <i class="fa-solid fa-bomb text-xs"></i> Pwn
+            </span>
+          </div>
+        </div>
+
+        <!-- HackDay -->
+        <div class="ctf-card">
+          <div class="flex items-center justify-between mb-3">
+            <span class="font-display text-sm font-bold text-white">HackDay</span>
+            <i class="fa-solid fa-shield-halved text-xs" style="color:var(--green);"></i>
+          </div>
+          <p class="text-xs" style="color:var(--dim);">Compétition nationale, forte communauté française.</p>
+          <div class="flex flex-wrap gap-2 mt-3">
+            <span class="badge" style="background:rgba(0,255,157,.08);border-color:rgba(0,255,157,.3);color:var(--green);">
+              <i class="fa-solid fa-globe text-xs"></i> Web
+            </span>
+            <span class="badge" style="background:rgba(168,85,247,.08);border-color:rgba(168,85,247,.3);color:#a855f7;">
+              <i class="fa-solid fa-code text-xs"></i> Reverse
+            </span>
+          </div>
+        </div>
+
+        <!-- Jeanne d'Hack -->
+        <div class="ctf-card">
+          <div class="flex items-center justify-between mb-3">
+            <span class="font-display text-sm font-bold text-white">Jeanne d'Hack</span>
+            <i class="fa-solid fa-crown text-xs" style="color:#eab308;"></i>
+          </div>
+          <p class="text-xs" style="color:var(--dim);">CTF FR emblématique, challenges inspirés du patrimoine national.</p>
+          <div class="flex flex-wrap gap-2 mt-3">
+            <span class="badge" style="background:rgba(0,212,255,.08);border-color:rgba(0,212,255,.3);color:var(--blue);">
+              <i class="fa-solid fa-microscope text-xs"></i> Forensics
+            </span>
+            <span class="badge" style="background:rgba(251,146,60,.08);border-color:rgba(251,146,60,.3);color:#fb923c;">
+              <i class="fa-solid fa-bomb text-xs"></i> Pwn
+            </span>
+          </div>
+        </div>
+
+        <!-- BitsCTF -->
+        <div class="ctf-card">
+          <div class="flex items-center justify-between mb-3">
+            <span class="font-display text-sm font-bold text-white">BitsCTF</span>
+            <i class="fa-solid fa-microchip text-xs" style="color:var(--blue);"></i>
+          </div>
+          <p class="text-xs" style="color:var(--dim);">CTF bas niveau, focus hardware et reverse engineering.</p>
+          <div class="flex flex-wrap gap-2 mt-3">
+            <span class="badge" style="background:rgba(168,85,247,.08);border-color:rgba(168,85,247,.3);color:#a855f7;">
+              <i class="fa-solid fa-code text-xs"></i> Reverse
+            </span>
+            <span class="badge" style="background:rgba(0,255,157,.08);border-color:rgba(0,255,157,.3);color:var(--green);">
+              <i class="fa-solid fa-globe text-xs"></i> Web
+            </span>
+          </div>
+        </div>
+
+        <!-- 0xFun -->
+        <div class="ctf-card">
+          <div class="flex items-center justify-between mb-3">
+            <span class="font-display text-sm font-bold text-white">0xFun</span>
+            <i class="fa-solid fa-infinity text-xs" style="color:var(--green);"></i>
+          </div>
+          <p class="text-xs" style="color:var(--dim);">CTF communautaire — esprit friendly & épreuves créatives.</p>
+          <div class="flex flex-wrap gap-2 mt-3">
+            <span class="badge" style="background:rgba(0,255,157,.08);border-color:rgba(0,255,157,.3);color:var(--green);">
+              <i class="fa-solid fa-globe text-xs"></i> Web
+            </span>
+            <span class="badge" style="background:rgba(0,212,255,.08);border-color:rgba(0,212,255,.3);color:var(--blue);">
+              <i class="fa-solid fa-microscope text-xs"></i> Forensics
+            </span>
+            <span class="badge" style="background:rgba(251,146,60,.08);border-color:rgba(251,146,60,.3);color:#fb923c;">
+              <i class="fa-solid fa-bomb text-xs"></i> Pwn
+            </span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Domaines de spécialité -->
+      <div class="fade-in">
+        <p class="text-xs tracking-widest mb-6 text-center" style="color:var(--dim);">// DOMAINES DE SPÉCIALITÉ</p>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+          <div class="p-5 rounded-lg text-center border transition-all duration-300 card-hover"
+               style="background:#0d1117;border-color:rgba(0,255,157,.2);">
+            <i class="fa-solid fa-globe text-2xl mb-3" style="color:var(--green);"></i>
+            <div class="font-display text-xs font-bold text-white mb-1">WEB EXPLOIT</div>
+            <div class="text-xs" style="color:var(--dim);">XSS · SQLi · IDOR · RCE</div>
+          </div>
+
+          <div class="p-5 rounded-lg text-center border transition-all duration-300 card-hover"
+               style="background:#0d1117;border-color:rgba(168,85,247,.2);">
+            <i class="fa-solid fa-code text-2xl mb-3" style="color:#a855f7;"></i>
+            <div class="font-display text-xs font-bold text-white mb-1">REVERSE</div>
+            <div class="text-xs" style="color:var(--dim);">Ghidra · GDB · IDA</div>
+          </div>
+
+          <div class="p-5 rounded-lg text-center border transition-all duration-300 card-hover"
+               style="background:#0d1117;border-color:rgba(251,146,60,.2);">
+            <i class="fa-solid fa-bomb text-2xl mb-3" style="color:#fb923c;"></i>
+            <div class="font-display text-xs font-bold text-white mb-1">PWN</div>
+            <div class="text-xs" style="color:var(--dim);">Buffer Overflow · ROP</div>
+          </div>
+
+          <div class="p-5 rounded-lg text-center border transition-all duration-300 card-hover"
+               style="background:#0d1117;border-color:rgba(0,212,255,.2);">
+            <i class="fa-solid fa-microscope text-2xl mb-3" style="color:var(--blue);"></i>
+            <div class="font-display text-xs font-bold text-white mb-1">FORENSICS</div>
+            <div class="text-xs" style="color:var(--dim);">Wireshark · Volatility</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SECTION ROADMAP
+  ══════════════════════════════════════════ -->
+  <section id="roadmap" class="px-4">
+    <div class="max-w-5xl mx-auto">
+
+      <div class="fade-in mb-14 text-center">
+        <p class="text-xs tracking-widest mb-2" style="color:var(--green);">// TRAJECTOIRE ACADÉMIQUE</p>
+        <h2 class="font-display font-bold text-3xl md:text-4xl text-white">
+          ROAD<span style="color:var(--green);">MAP</span>
+        </h2>
+      </div>
+
+      <!-- Timeline visuelle desktop -->
+      <div class="fade-in hidden md:flex items-center justify-between mb-8">
+
+        <!-- ÉTAPE 1 -->
+        <div class="road-step flex-none w-44">
+          <div class="road-node" style="background:rgba(0,255,157,.1);border-color:var(--green);color:var(--green);">
+            <i class="fa-solid fa-graduation-cap"></i>
+          </div>
+          <div class="text-center mt-3">
+            <div class="font-display text-xs font-bold text-white">LYCÉE</div>
+            <div class="text-xs mt-1" style="color:var(--dim);">Maintenant</div>
+            <div class="text-xs mt-2 px-3 py-1 rounded" style="background:rgba(0,255,157,.08);color:var(--green);border:1px solid rgba(0,255,157,.2);">
+              ✓ EN COURS
+            </div>
+          </div>
+        </div>
+
+        <!-- Connecteur 1 -->
+        <div class="road-connector flex-1 mx-4"></div>
+
+        <!-- ÉTAPE 2 -->
+        <div class="road-step flex-none w-44">
+          <div class="road-node" style="background:rgba(0,212,255,.1);border-color:var(--blue);color:var(--blue);">
+            <i class="fa-solid fa-network-wired"></i>
+          </div>
+          <div class="text-center mt-3">
+            <div class="font-display text-xs font-bold text-white">BUT R&T</div>
+            <div class="text-xs mt-1" style="color:var(--dim);">Réseaux & Télécoms</div>
+            <div class="text-xs mt-2 px-3 py-1 rounded" style="background:rgba(0,212,255,.08);color:var(--blue);border:1px solid rgba(0,212,255,.2);">
+              ○ PROCHAIN
+            </div>
+          </div>
+        </div>
+
+        <!-- Connecteur 2 -->
+        <div class="road-connector flex-1 mx-4"></div>
+
+        <!-- ÉTAPE 3 -->
+        <div class="road-step flex-none w-44">
+          <div class="road-node" style="background:rgba(251,146,60,.1);border-color:#fb923c;color:#fb923c;">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <div class="text-center mt-3">
+            <div class="font-display text-xs font-bold text-white">ÉCOLE INGÉ</div>
+            <div class="text-xs mt-1" style="color:var(--dim);">Cybersécurité</div>
+            <div class="text-xs mt-2 px-3 py-1 rounded" style="background:rgba(251,146,60,.08);color:#fb923c;border:1px solid rgba(251,146,60,.2);">
+              ● OBJECTIF
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Timeline mobile -->
+      <div class="fade-in flex md:hidden flex-col gap-0 mb-8">
+
+        <div class="flex items-center gap-4 pb-8">
+          <div class="flex flex-col items-center">
+            <div class="road-node w-12 h-12 text-lg" style="background:rgba(0,255,157,.1);border-color:var(--green);color:var(--green);">
+              <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <div class="w-px flex-1 mt-2" style="background:linear-gradient(to bottom, var(--green), var(--blue));min-height:50px;"></div>
+          </div>
+          <div>
+            <div class="font-display text-sm font-bold text-white">LYCÉE</div>
+            <div class="text-xs mt-1" style="color:var(--dim);">Actuellement — Passionné · CTF Player</div>
+            <span class="inline-block mt-2 text-xs px-2 py-1 rounded" style="background:rgba(0,255,157,.08);color:var(--green);border:1px solid rgba(0,255,157,.2);">✓ EN COURS</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4 pb-8">
+          <div class="flex flex-col items-center">
+            <div class="road-node w-12 h-12 text-lg" style="background:rgba(0,212,255,.1);border-color:var(--blue);color:var(--blue);">
+              <i class="fa-solid fa-network-wired"></i>
+            </div>
+            <div class="w-px flex-1 mt-2" style="background:linear-gradient(to bottom, var(--blue), #fb923c);min-height:50px;"></div>
+          </div>
+          <div>
+            <div class="font-display text-sm font-bold text-white">BUT Réseaux & Télécoms</div>
+            <div class="text-xs mt-1" style="color:var(--dim);">Protocoles · Administration · Sécurité réseau</div>
+            <span class="inline-block mt-2 text-xs px-2 py-1 rounded" style="background:rgba(0,212,255,.08);color:var(--blue);border:1px solid rgba(0,212,255,.2);">○ PROCHAIN</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <div class="road-node w-12 h-12 text-lg flex-none" style="background:rgba(251,146,60,.1);border-color:#fb923c;color:#fb923c;">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <div>
+            <div class="font-display text-sm font-bold text-white">École d'Ingénieur — Cybersécurité</div>
+            <div class="text-xs mt-1" style="color:var(--dim);">Pentest · Red Team · Architecture Sécurisée</div>
+            <span class="inline-block mt-2 text-xs px-2 py-1 rounded" style="background:rgba(251,146,60,.08);color:#fb923c;border:1px solid rgba(251,146,60,.2);">● OBJECTIF FINAL</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Info cards sous la roadmap -->
+      <div class="fade-in grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+        <div class="p-4 rounded-lg border" style="background:#0d1117;border-color:rgba(0,255,157,.15);">
+          <div class="font-display text-xs font-bold mb-2" style="color:var(--green);">// ACTUELLEMENT</div>
+          <p class="text-xs" style="color:var(--dim);">Terminale · Autoformation CTF · Veille sécu · Scripting Python & Bash</p>
+        </div>
+        <div class="p-4 rounded-lg border" style="background:#0d1117;border-color:rgba(0,212,255,.15);">
+          <div class="font-display text-xs font-bold mb-2" style="color:var(--blue);">// BUT R&T</div>
+          <p class="text-xs" style="color:var(--dim);">Cisco · OSPF/BGP · VPN · Virtualisation · Administration systèmes</p>
+        </div>
+        <div class="p-4 rounded-lg border" style="background:#0d1117;border-color:rgba(251,146,60,.15);">
+          <div class="font-display text-xs font-bold mb-2" style="color:#fb923c;">// ÉCOLE INGÉ</div>
+          <p class="text-xs" style="color:var(--dim);">Pentest avancé · SOC · Malware analysis · Architecture Zero Trust</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SECTION SKILLS
+  ══════════════════════════════════════════ -->
+  <section id="skills" class="px-4">
+    <div class="max-w-5xl mx-auto">
+
+      <div class="fade-in mb-14 text-center">
+        <p class="text-xs tracking-widest mb-2" style="color:var(--green);">// STACK TECHNIQUE</p>
+        <h2 class="font-display font-bold text-3xl md:text-4xl text-white">
+          TECH <span style="color:var(--green);">SKILLS</span>
+        </h2>
+      </div>
+
+      <div class="fade-in grid grid-cols-1 md:grid-cols-2 gap-8">
+
+        <!-- Réseaux -->
+        <div class="p-6 rounded-lg border card-hover" style="background:#0d1117;border-color:var(--border);">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 rounded flex items-center justify-center" style="background:rgba(0,212,255,.1);">
+              <i class="fa-solid fa-network-wired" style="color:var(--blue);"></i>
+            </div>
+            <div>
+              <div class="font-display text-sm font-bold text-white">RÉSEAUX</div>
+              <div class="text-xs" style="color:var(--dim);">Cisco · Protocoles · Architecture</div>
+            </div>
+          </div>
+          <div class="space-y-4">
+            <div>
+              <div class="flex justify-between text-xs mb-1"><span style="color:var(--dim);">Cisco IOS / Packet Tracer</span><span style="color:var(--blue);">80%</span></div>
+              <div class="skill-bar-track"><div class="skill-bar-fill" style="width:80%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1"><span style="color:var(--dim);">TCP/IP · DNS · HTTP</span><span style="color:var(--blue);">85%</span></div>
+              <div class="skill-bar-track"><div class="skill-bar-fill" style="width:85%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1"><span style="color:var(--dim);">Wireshark / analyse trafic</span><span style="color:var(--blue);">75%</span></div>
+              <div class="skill-bar-track"><div class="skill-bar-fill" style="width:75%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Linux -->
+        <div class="p-6 rounded-lg border card-hover" style="background:#0d1117;border-color:var(--border);">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 rounded flex items-center justify-center" style="background:rgba(0,255,157,.1);">
+              <i class="fa-brands fa-linux" style="color:var(--green);"></i>
+            </div>
+            <div>
+              <div class="font-display text-sm font-bold text-white">LINUX</div>
+              <div class="text-xs" style="color:var(--dim);">Kali · Debian · Administration</div>
+            </div>
+          </div>
+          <div class="space-y-4">
+            <div>
+              <div class="flex justify-between text-xs mb-1"><span style="color:var(--dim);">Kali Linux</span><span style="color:var(--green);">85%</span></div>
+              <div class="skill-bar-track"><div class="skill-bar-fill" style="width:85%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1"><span style="color:var(--dim);">Administration système</span><span style="color:var(--green);">75%</span></div>
+              <div class="skill-bar-track"><div class="skill-bar-fill" style="width:75%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1"><span style="color:var(--dim);">Outils pentest (Nmap, Metasploit)</span><span style="color:var(--green);">70%</span></div>
+              <div class="skill-bar-track"><div class="skill-bar-fill" style="width:70%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scripting -->
+        <div class="p-6 rounded-lg border card-hover" style="background:#0d1117;border-color:var(--border);">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 rounded flex items-center justify-center" style="background:rgba(168,85,247,.1);">
+              <i class="fa-brands fa-python" style="color:#a855f7;"></i>
+            </div>
+            <div>
+              <div class="font-display text-sm font-bold text-white">SCRIPTING</div>
+              <div class="text-xs" style="color:var(--dim);">Python · Bash · Automatisation</div>
+            </div>
+          </div>
+          <div class="space-y-4">
+            <div>
+              <div class="flex justify-between text-xs mb-1"><span style="color:var(--dim);">Python (CTF / scripts)</span><span style="color:#a855f7;">80%</span></div>
+              <div class="skill-bar-track"><div class="skill-bar-fill" style="width:80%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1"><span style="color:var(--dim);">Bash</span><span style="color:#a855f7;">72%</span></div>
+              <div class="skill-bar-track"><div class="skill-bar-fill" style="width:72%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1"><span style="color:var(--dim);">pwntools / requests</span><span style="color:#a855f7;">65%</span></div>
+              <div class="skill-bar-track"><div class="skill-bar-fill" style="width:65%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Git & Outils -->
+        <div class="p-6 rounded-lg border card-hover" style="background:#0d1117;border-color:var(--border);">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 rounded flex items-center justify-center" style="background:rgba(251,146,60,.1);">
+              <i class="fa-brands fa-git-alt" style="color:#fb923c;"></i>
+            </div>
+            <div>
+              <div class="font-display text-sm font-bold text-white">GIT & OUTILS</div>
+              <div class="text-xs" style="color:var(--dim);">Version control · DevSecOps</div>
+            </div>
+          </div>
+          <div class="space-y-4">
+            <div>
+              <div class="flex justify-between text-xs mb-1"><span style="color:var(--dim);">Git / GitHub</span><span style="color:#fb923c;">80%</span></div>
+              <div class="skill-bar-track"><div class="skill-bar-fill" style="width:80%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1"><span style="color:var(--dim);">Docker (initiation)</span><span style="color:#fb923c;">55%</span></div>
+              <div class="skill-bar-track"><div class="skill-bar-fill" style="width:55%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1"><span style="color:var(--dim);">VS Code / Vim</span><span style="color:#fb923c;">85%</span></div>
+              <div class="skill-bar-track"><div class="skill-bar-fill" style="width:85%"></div></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       PENTEST LAB CTA
+  ══════════════════════════════════════════ -->
+  <section class="px-4 pb-0">
+    <div class="max-w-5xl mx-auto fade-in">
+      <a href="lab.html" class="block group">
+        <div class="p-6 rounded-lg border transition-all duration-300 flex items-center gap-6"
+             style="background:#0d1117;border-color:rgba(255,71,87,.25);"
+             onmouseover="this.style.borderColor='rgba(255,71,87,.7)';this.style.boxShadow='0 0 40px rgba(255,71,87,.12)'"
+             onmouseout="this.style.borderColor='rgba(255,71,87,.25)';this.style.boxShadow='none'">
+          <!-- Icône animée -->
+          <div class="w-14 h-14 rounded-lg flex items-center justify-center flex-shrink-0"
+               style="background:rgba(255,71,87,.08);border:1px solid rgba(255,71,87,.3);">
+            <i class="fa-solid fa-terminal text-xl" style="color:#ff4757;"></i>
+          </div>
+          <!-- Texte -->
+          <div class="flex-1">
+            <div class="font-display text-sm font-bold text-white mb-1">
+              PENTEST LAB
+              <span class="ml-2 text-xs px-2 py-0.5 rounded"
+                    style="background:rgba(255,71,87,.1);color:#ff4757;border:1px solid rgba(255,71,87,.3);">
+                INTERACTIF
+              </span>
+            </div>
+            <p class="text-xs" style="color:#6e7f96;">
+              Terminal Linux simulé · Challenge CTF filesystem · Trouve les 3 fragments du flag caché dans l'arborescence
+            </p>
+          </div>
+          <!-- Flèche -->
+          <i class="fa-solid fa-arrow-right text-sm transition-transform duration-300 group-hover:translate-x-2"
+             style="color:#ff4757;flex-shrink:0;"></i>
+        </div>
+      </a>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       FOOTER
+  ══════════════════════════════════════════ -->
+  <footer class="mt-20 border-t px-4 py-12" style="border-color:var(--border);">
+    <div class="max-w-5xl mx-auto">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-8">
+
+        <!-- Signature -->
+        <div>
+          <div class="font-display font-black text-xl mb-1" style="color:var(--green);">EOGHAN</div>
+          <p class="text-xs" style="color:var(--dim);">
+            Futur Ingénieur Cybersécurité · Loire-Atlantique (44) · 18 ans
+          </p>
+        </div>
+
+        <!-- Liens -->
+        <div class="flex items-center gap-4">
+          <a href="https://github.com/" target="_blank"
+             class="flex items-center gap-2 px-5 py-3 rounded border text-xs tracking-widest transition-all duration-300"
+             style="border-color:var(--border);color:var(--dim);"
+             onmouseover="this.style.borderColor='var(--green)';this.style.color='var(--green)'"
+             onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--dim)'">
+            <i class="fa-brands fa-github text-base"></i>
+            GitHub
+          </a>
+          <a href="https://ctftime.org/" target="_blank"
+             class="flex items-center gap-2 px-5 py-3 rounded border text-xs tracking-widest transition-all duration-300"
+             style="border-color:var(--border);color:var(--dim);"
+             onmouseover="this.style.borderColor='var(--blue)';this.style.color='var(--blue)'"
+             onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--dim)'">
+            <i class="fa-solid fa-flag text-base"></i>
+            CTFtime
+          </a>
+        </div>
+
+      </div>
+
+      <div class="mt-8 pt-8 border-t text-center text-xs" style="border-color:var(--border);color:var(--dim);">
+        <span style="color:var(--green);">root@eoghan</span>:<span style="color:var(--blue);">~</span>$ echo "Keep hacking, keep learning." &nbsp;·&nbsp; 2025
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- ══════════════════════════════════════════
+       JAVASCRIPT
+  ══════════════════════════════════════════ -->
+  <script>
+    /* ─────────────────────────────
+       TERMINAL — Simulation de frappe
+    ───────────────────────────── */
+    const termLines = [
+      // [type, prompt, command, output]
+      ['cmd', '$ ', 'whoami'],
+      ['out', '',   '',  '→  <span class="hi">Eoghan</span>, 18 ans, Loire-Atlantique (44)'],
+      ['gap'],
+      ['cmd', '$ ', 'status'],
+      ['out', '',   '',  '→  Étudiant passionné · <span class="hi">CTF Player</span> · Team FR Top 5'],
+      ['gap'],
+      ['cmd', '$ ', 'target'],
+      ['out', '',   '',  '→  BUT Réseaux &amp; Télécoms <span class="hi">▸</span> École Ingénieur Cybersécurité'],
+      ['gap'],
+      ['cursor'],
+    ];
+
+    const termBody = document.getElementById('termBody');
+
+    function buildTerminal() {
+      let delay = 0;
+      termLines.forEach(line => {
+        if (line[0] === 'gap') {
+          setTimeout(() => {
+            const el = document.createElement('div');
+            el.style.height = '8px';
+            termBody.appendChild(el);
+          }, delay);
+          delay += 60;
+          return;
+        }
+        if (line[0] === 'cursor') {
+          setTimeout(() => {
+            const el = document.createElement('div');
+            el.innerHTML = `<span class="prompt">$ </span><span class="cursor"></span>`;
+            termBody.appendChild(el);
+          }, delay);
+          return;
+        }
+        if (line[0] === 'cmd') {
+          const text = line[2];
+          setTimeout(() => {
+            const el = document.createElement('div');
+            el.innerHTML = `<span class="prompt">${line[1]}</span><span class="cmd"></span>`;
+            termBody.appendChild(el);
+            // frappe caractère par caractère
+            const span = el.querySelector('.cmd');
+            let i = 0;
+            const type = setInterval(() => {
+              if (i < text.length) { span.textContent += text[i++]; }
+              else clearInterval(type);
+            }, 55);
+          }, delay);
+          delay += text.length * 55 + 200;
+        }
+        if (line[0] === 'out') {
+          const outText = line[3];
+          setTimeout(() => {
+            const el = document.createElement('div');
+            el.classList.add('out');
+            el.innerHTML = outText;
+            termBody.appendChild(el);
+          }, delay);
+          delay += 180;
+        }
+      });
+    }
+    buildTerminal();
+
+
+    /* ─────────────────────────────
+       SCROLL — Fade-in & skill bars
+    ───────────────────────────── */
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+
+          // Animer les skill bars dans cet élément
+          entry.target.querySelectorAll('.skill-bar-fill').forEach(bar => {
+            setTimeout(() => bar.classList.add('animated'), 200);
+          });
+        }
+      });
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+  </script>
+
+</body>
+</html>
