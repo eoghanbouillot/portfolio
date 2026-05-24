@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eoghan | Cyber Enjoyer in Progress</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts : JetBrains Mono + Orbitron -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
+
+  <!-- Font Awesome pour les icônes -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <script>
+    // Configuration Tailwind custom
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            emerald: { 400: '#34d399', 500: '#10b981', 600: '#059669' },
+            cyber: {
+              green:  '#00ff9d',
+              blue:   '#00d4ff',
+              dark:   '#080c10',
+              card:   '#0d1117',
+              border: '#1a2332',
+              dim:    '#8b949e',
+            }
+          },
+          fontFamily: {
+            mono:    ['"JetBrains Mono"', 'monospace'],
+            display: ['Orbitron', 'monospace'],
+          },
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* ── Variables & reset ── */
+    :root {
+      --green:  #00ff9d;
+      --blue:   #00d4ff;
+      --dark:   #080c10;
+      --card:   #0d1117;
+      --border: #1a2332;
+      --dim:    #8b949e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { background: var(--dark); }
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--dark);
+      color: #c9d1d9;
+      overflow-x: hidden;
+    }
+
+    /* ── Scanline overlay ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 3px,
+        rgba(0,0,0,.15) 3px,
+        rgba(0,0,0,.15) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── Noise grain ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: .04;
+      pointer-events: none;
+      z-index: 9998;
+    }
+
+    /* ── Grid background ── */
+    .grid-bg {
+      background-image:
+        linear-gradient(rgba(0,255,157,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,255,157,.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    /* ── Glow utilities ── */
+    .glow-green  { text-shadow: 0 0 10px var(--green), 0 0 30px rgba(0,255,157,.4); }
+    .glow-blue   { text-shadow: 0 0 10px var(--blue),  0 0 30px rgba(0,212,255,.4); }
+    .border-glow { box-shadow: 0 0 0 1px var(--border), 0 0 20px rgba(0,255,157,.05); }
+    .card-hover  { transition: all .3s ease; }
+    .card-hover:hover {
+      border-color: rgba(0,255,157,.4) !important;
+      box-shadow: 0 0 30px rgba(0,255,157,.1), 0 0 0 1px rgba(0,255,157,.2);
+      transform: translateY(-2px);
+    }
+
+    /* ── Terminal ── */
+    .terminal-window {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0,0,0,.8), 0 0 0 1px var(--border), 0 0 80px rgba(0,255,157,.05);
+    }
+    .terminal-bar {
+      background: #161b22;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot-r { background: #ff5f57; }
+    .dot-y { background: #febc2e; }
+    .dot-g { background: #28c840; }
+    .terminal-title {
+      font-size: 11px;
+      color: var(--dim);
+      margin-left: auto;
+      margin-right: auto;
+      letter-spacing: .1em;
+    }
+    .terminal-body {
+      padding: 20px;
+      font-size: 14px;
+      line-height: 1.8;
+      min-height: 220px;
+    }
+    .prompt { color: var(--green); }
+    .cmd    { color: #c9d1d9; }
+    .out    { color: var(--dim); }
+    .out span.hi { color: var(--blue); }
+    .cursor {
+      display: inline-block;
+      width: 8px;
+      height: 15px;
+      background: var(--green);
+      vertical-align: middle;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* ── Typing animation helpers ── */
+    .line { opacity: 0; }
+    .line.visible { opacity: 1; }
+
+    /* ── Badge ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      border: 1px solid;
+    }
+
+    /* ── Roadmap ── */
+    .road-step {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .road-node {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      border: 2px solid;
+      position: relative;
+      z-index: 1;
+    }
+    .road-connector {
+      flex: 1;
+      height: 2px;
+      background: linear-gradient(90deg, var(--green), var(--blue));
+      position: relative;
+      overflow: hidden;
+    }
+    .road-connector::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 50%;
+      height: 100%;
+      background: rgba(255,255,255,.4);
+      animation: flow 2s linear infinite;
+    }
+    @keyframes flow { to { left: 200%; } }
+
+    /* ── Skill bar ── */
+    .skill-bar-track {
+      background: #1a2332;
+      border-radius: 2px;
+      height: 6px;
+      overflow: hidden;
+    }
+    .skill-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: linear-gradient(90deg, var(--green), var(--blue));
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 1.2s cubic-bezier(.4,0,.2,1);
+    }
+    .skill-bar-fill.animated { transform: scaleX(1); }
+
+    /* ── Sections ── */
+    section { padding: 80px 0; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar       { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--dark); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--green); }
+
+    /* ── Navbar ── */
+    nav {
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Fade-in on scroll ── */
+    .fade-in { opacity: 0; transform: translateY(30px); transition: opacity .6s ease, transform .6s ease; }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── CTF card ── */
+    .ctf-card {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px;
+      background: rgba(13,17,23,.8);
+      transition: all .3s ease;
+    }
+    .ctf-card:hover {
+      border-color: rgba(0,212,255,.4);
+      box-shadow: 0 0 20px rgba(0,212,255,.08);
+    }
+  </style>
+</head>
+
+<body class="grid-bg">
+
+  <!-- ══════════════════════════════════════════
+       NAVIGATION
+  ══════════════════════════════════════════ -->
+  <nav class="fixed top-0 left-0 right-0 z-50" style="background:rgba(8,12,16,.85);">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <!-- Logo -->
+      <span class="font-display font-bold text-sm tracking-widest" style="color:var(--green);">
+        &lt;EOGHAN /&gt;
+      </span>
+      <!-- Nav links -->
+      <ul class="hidden md:flex items-center gap-8 text-xs tracking-widest" style="color:var(--dim);">
+        <li><a href="#hero"      class="hover:text-white transition-colors duration-200">TERMINAL</a></li>
+        <li><a href="#expertise" class="hover:text-white transition-colors duration-200">EXPERTISE</a></li>
+        <li><a href="#roadmap"   class="hover:text-white transition-colors duration-200">ROADMAP</a></li>
+        <li><a href="#skills"    class="hover:text-white transition-colors duration-200">SKILLS</a></li>
+        <li><a href="#quantum"   class="hover:text-white transition-colors duration-200">QUANTIQUE</a></li>
+        <li><a href="#certifs"   class="hover:text-white transition-colors duration-200">CERTIFS</a></li>
+        <li>
+          <a href="projects.html"
+             class="flex items-center gap-2 px-4 py-2 border rounded text-xs tracking-widest transition-all duration-200"
+             style="border-color:var(--green);color:var(--green);"
+             onmouseover="this.style.background='rgba(0,255,157,.1)'"
+             onmouseout="this.style.background='transparent'">
+            <i class="fa-solid fa-code-branch text-xs"></i>PROJETS
+          </a>
+        </li>
+        <li>
+          <a href="writeups.html"
+             class="flex items-center gap-2 px-4 py-2 border rounded text-xs tracking-widest transition-all duration-200"
+             style="border-color:var(--blue);color:var(--blue);"
+             onmouseover="this.style.background='rgba(0,212,255,.1)'"
+             onmouseout="this.style.background='transparent'">
+            <i class="fa-solid fa-scroll text-xs"></i>WRITE-UPS
+          </a>
+        </li>
+        <li>
+          <a href="lab.html"
+             class="flex items-center gap-2 px-4 py-2 border rounded text-xs tracking-widest transition-all duration-200"
+             style="border-color:#ff4757;color:#ff4757;"
+             onmouseover="this.style.background='rgba(255,71,87,.1)'"
+             onmouseout="this.style.background='transparent'">
+            <i class="fa-solid fa-terminal text-xs"></i>PENTEST LAB
+          </a>
+        </li>
+        <li>
+          <a href="https://github.com/eoghanbouillot" target="_blank"
+             class="px-4 py-2 border rounded text-xs tracking-widest transition-all duration-200"
+             style="border-color:var(--green);color:var(--green);"
+             onmouseover="this.style.background='rgba(0,255,157,.1)'"
+             onmouseout="this.style.background='transparent'">
+            GITHUB
+          </a>
+        </li>
+      </ul>
+      <!-- Mobile menu button -->
+      <button id="menuBtn" class="md:hidden text-gray-400" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
+        <i class="fa fa-bars"></i>
+      </button>
+    </div>
+    <!-- Mobile menu -->
+    <div id="mobileMenu" class="hidden md:hidden px-6 pb-4 flex flex-col gap-4 text-xs tracking-widest" style="color:var(--dim);">
+      <a href="#hero"      class="hover:text-white">TERMINAL</a>
+      <a href="#expertise" class="hover:text-white">EXPERTISE</a>
+      <a href="#roadmap"   class="hover:text-white">ROADMAP</a>
+      <a href="#skills"    class="hover:text-white">SKILLS</a>
+      <a href="#quantum"   class="hover:text-white">QUANTIQUE</a>
+      <a href="#certifs"   class="hover:text-white">CERTIFS</a>
+      <a href="projects.html" style="color:var(--green);" class="flex items-center gap-2">
+        <i class="fa-solid fa-code-branch"></i>PROJETS
+      </a>
+      <a href="writeups.html" style="color:var(--blue);" class="flex items-center gap-2">
+        <i class="fa-solid fa-scroll"></i>WRITE-UPS
+      </a>
+      <a href="lab.html" style="color:#ff4757;" class="flex items-center gap-2">
+        <i class="fa-solid fa-terminal"></i>PENTEST LAB
+      </a>
+      <a href="https://github.com/" target="_blank" style="color:var(--green);">GITHUB</a>
+    </div>
+  </nav>
+
+
+  <!-- ══════════════════════════════════════════
+       HERO — SECTION TERMINAL
+  ══════════════════════════════════════════ -->
+  <section id="hero" class="min-h-screen flex flex-col items-center justify-center px-4 pt-20">
+    <div class="max-w-3xl w-full mx-auto">
+
+      <!-- Titre -->
+      <div class="text-center mb-10">
+        <p class="text-xs tracking-widest mb-3" style="color:var(--green);">// INITIATING HANDSHAKE...</p>
+        <h1 class="font-display font-black text-4xl md:text-6xl tracking-tight mb-4 glow-green" style="color:var(--green);">
+          EOGHAN
+        </h1>
+        <p class="text-sm md:text-base tracking-widest" style="color:var(--dim);">
+          Cyber&nbsp;Enjoyer&nbsp;·&nbsp;CTF&nbsp;Player&nbsp;·&nbsp;Quantique&nbsp;&amp;&nbsp;Crypto&nbsp;·&nbsp;Loire-Atlantique
+        </p>
+      </div>
+
+      <!-- Fenêtre terminal -->
+      <div class="terminal-window">
+        <div class="terminal-bar">
+          <span class="dot dot-r"></span>
+          <span class="dot dot-y"></span>
+          <span class="dot dot-g"></span>
+          <span class="terminal-title">eoghan@kali:~</span>
+        </div>
+        <div class="terminal-body" id="termBody">
+          <!-- Les lignes sont injectées par JS -->
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="flex justify-center gap-4 mt-10 flex-wrap">
+        <a href="#expertise" class="px-6 py-3 font-display text-xs tracking-widest font-bold rounded transition-all duration-300"
+           style="background:var(--green);color:#080c10;"
+           onmouseover="this.style.boxShadow='0 0 30px rgba(0,255,157,.5)'"
+           onmouseout="this.style.boxShadow='none'">
+          <i class="fa-solid fa-crosshairs mr-2"></i>EXPERTISE
+        </a>
+        <a href="#roadmap" class="px-6 py-3 font-display text-xs tracking-widest font-bold rounded border transition-all duration-300"
+           style="border-color:var(--blue);color:var(--blue);"
+           onmouseover="this.style.boxShadow='0 0 30px rgba(0,212,255,.3)'"
+           onmouseout="this.style.boxShadow='none'">
+          <i class="fa-solid fa-route mr-2"></i>ROADMAP
+        </a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       spYCTF TEAM BANNER
+  ══════════════════════════════════════════ -->
+  <section class="px-4 pb-0 -mt-10">
+    <div class="max-w-5xl mx-auto fade-in">
+      <a href="https://spyctf.info" target="_blank" rel="noopener" class="block group"
+         style="text-decoration:none;">
+        <div class="relative flex items-center gap-6 rounded-lg border overflow-hidden transition-all duration-400"
+             style="
+               background: linear-gradient(135deg, #0a0010 0%, #10002b 50%, #0a0010 100%);
+               border-color: rgba(139,92,246,.35);
+               padding: 22px 32px;
+               min-height: 80px;
+             "
+             onmouseover="
+               this.style.borderColor='rgba(167,139,250,.85)';
+               this.style.boxShadow='0 0 50px rgba(139,92,246,.25), 0 0 0 1px rgba(139,92,246,.4)';
+             "
+             onmouseout="
+               this.style.borderColor='rgba(139,92,246,.35)';
+               this.style.boxShadow='none';
+             ">
+
+          <!-- Glitch scanline accent -->
+          <div style="
+            position:absolute;inset:0;pointer-events:none;
+            background: repeating-linear-gradient(
+              to bottom,
+              transparent 0px, transparent 5px,
+              rgba(139,92,246,.025) 5px, rgba(139,92,246,.025) 6px
+            );
+          "></div>
+
+          <!-- Glow orb bg -->
+          <div style="
+            position:absolute;top:-40px;left:50%;transform:translateX(-50%);
+            width:320px;height:120px;
+            background:radial-gradient(ellipse, rgba(139,92,246,.18) 0%, transparent 70%);
+            pointer-events:none;
+          "></div>
+
+          <!-- Icône -->
+          <div class="flex-shrink-0 flex items-center justify-center rounded-lg"
+               style="
+                 width:52px;height:52px;
+                 background:rgba(139,92,246,.12);
+                 border:1px solid rgba(139,92,246,.4);
+               ">
+            <i class="fa-solid fa-user-secret text-xl"
+               style="color:#a78bfa;filter:drop-shadow(0 0 6px rgba(139,92,246,.7));"></i>
+          </div>
+
+          <!-- Texte -->
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-3 mb-1 flex-wrap">
+              <span class="font-display text-sm font-bold tracking-widest"
+                    style="color:#e9d5ff;letter-spacing:.12em;">
+                spYCTF
+              </span>
+              <span class="text-xs px-2 py-0.5 rounded font-mono"
+                    style="background:rgba(139,92,246,.15);color:#a78bfa;border:1px solid rgba(139,92,246,.35);letter-spacing:.08em;">
+                🏴 TEAM FR · TOP 2
+              </span>
+              <span class="text-xs px-2 py-0.5 rounded font-mono"
+                    style="background:rgba(167,139,250,.08);color:#c4b5fd;border:1px solid rgba(167,139,250,.2);letter-spacing:.08em;">
+                spyctf.info
+              </span>
+            </div>
+            <p class="text-xs font-mono" style="color:#7c6f9c;">
+              Rejoins ma team CTF · Compétitions · Challenges · Communauté offensive francophone
+            </p>
+          </div>
+
+          <!-- Flèche animée -->
+          <div class="flex-shrink-0 flex items-center gap-2 transition-transform duration-300 group-hover:translate-x-2">
+            <span class="text-xs font-mono tracking-widest" style="color:#a78bfa;">VISITER</span>
+            <i class="fa-solid fa-arrow-right text-sm" style="color:#a78bfa;"></i>
+          </div>
+
+        </div>
+      </a>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       DOMAINES DE SPÉCIALITÉ
+  ══════════════════════════════════════════ -->
+  <section id="expertise" class="px-4">
+    <div class="max-w-5xl mx-auto">
+
+      <div class="fade-in mb-14 text-center">
+        <p class="text-xs tracking-widest mb-2" style="color:var(--green);">// OFFENSIVE SECURITY</p>
+        <h2 class="font-display font-bold text-3xl md:text-4xl text-white mb-4">
+          DOMAINES DE <span style="color:var(--green);">SPÉCIALITÉ</span>
+        </h2>
+        <p class="text-sm max-w-2xl mx-auto" style="color:var(--dim);">
+          Compétiteur CTF actif au sein de <span class="font-bold" style="color:#a78bfa;">spYCTF</span>,
+          team française classée <span class="font-bold" style="color:var(--blue);">Top 2 France</span> sur CTFtime.
+          Mes axes principaux en offensive security :
+        </p>
+      </div>
+
+      <div class="fade-in grid grid-cols-2 md:grid-cols-4 gap-4">
+
+        <div class="p-5 rounded-lg text-center border transition-all duration-300 card-hover"
+             style="background:#0d1117;border-color:rgba(0,255,157,.2);">
+          <i class="fa-solid fa-globe text-2xl mb-3" style="color:var(--green);"></i>
+          <div class="font-display text-xs font-bold text-white mb-1">WEB EXPLOIT</div>
+          <div class="text-xs" style="color:var(--dim);">XSS · SQLi · IDOR · RCE</div>
+        </div>
+
+        <div class="p-5 rounded-lg text-center border transition-all duration-300 card-hover"
+             style="background:#0d1117;border-color:rgba(168,85,247,.2);">
+          <i class="fa-solid fa-code text-2xl mb-3" style="color:#a855f7;"></i>
+          <div class="font-display text-xs font-bold text-white mb-1">REVERSE</div>
+          <div class="text-xs" style="color:var(--dim);">Ghidra · GDB · IDA</div>
+        </div>
+
+        <div class="p-5 rounded-lg text-center border transition-all duration-300 card-hover"
+             style="background:#0d1117;border-color:rgba(251,146,60,.2);">
+          <i class="fa-solid fa-bomb text-2xl mb-3" style="color:#fb923c;"></i>
+          <div class="font-display text-xs font-bold text-white mb-1">PWN</div>
+          <div class="text-xs" style="color:var(--dim);">Buffer Overflow · ROP</div>
+        </div>
+
+        <div class="p-5 rounded-lg text-center border transition-all duration-300 card-hover"
+             style="background:#0d1117;border-color:rgba(0,212,255,.2);">
+          <i class="fa-solid fa-microscope text-2xl mb-3" style="color:var(--blue);"></i>
+          <div class="font-display text-xs font-bold text-white mb-1">FORENSICS</div>
+          <div class="text-xs" style="color:var(--dim);">Wireshark · Volatility</div>
+        </div>
+
+        <div class="p-5 rounded-lg text-center border transition-all duration-300 card-hover"
+             style="background:#0d1117;border-color:rgba(236,72,153,.2);">
+          <i class="fa-solid fa-key text-2xl mb-3" style="color:#ec4899;"></i>
+          <div class="font-display text-xs font-bold text-white mb-1">CRYPTO</div>
+          <div class="text-xs" style="color:var(--dim);">RSA · AES · Hash · Ciphers</div>
+        </div>
+
+        <div class="p-5 rounded-lg text-center border transition-all duration-300 card-hover"
+             style="background:#0d1117;border-color:rgba(34,211,238,.2);">
+          <i class="fa-solid fa-atom text-2xl mb-3" style="color:#22d3ee;"></i>
+          <div class="font-display text-xs font-bold text-white mb-1">QUANTIQUE</div>
+          <div class="text-xs" style="color:var(--dim);">Qubits · Portes · PQC</div>
+        </div>
+
+        <div class="p-5 rounded-lg text-center border transition-all duration-300 card-hover"
+             style="background:#0d1117;border-color:rgba(250,204,21,.2);">
+          <i class="fa-solid fa-robot text-2xl mb-3" style="color:#facc15;"></i>
+          <div class="font-display text-xs font-bold text-white mb-1">AI SECURITY</div>
+          <div class="text-xs" style="color:var(--dim);">Prompt injection · LLM</div>
+        </div>
+
+        <div class="p-5 rounded-lg text-center border transition-all duration-300 card-hover"
+             style="background:#0d1117;border-color:rgba(239,68,68,.2);">
+          <i class="fa-solid fa-bug text-2xl mb-3" style="color:#ef4444;"></i>
+          <div class="font-display text-xs font-bold text-white mb-1">MALWARE</div>
+          <div class="text-xs" style="color:var(--dim);">Analyse · YARA · IOC</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SECTION ROADMAP
+  ══════════════════════════════════════════ -->
+  <section id="roadmap" class="px-4">
+    <div class="max-w-5xl mx-auto">
+
+      <div class="fade-in mb-14 text-center">
+        <p class="text-xs tracking-widest mb-2" style="color:var(--green);">// TRAJECTOIRE ACADÉMIQUE</p>
+        <h2 class="font-display font-bold text-3xl md:text-4xl text-white">
+          ROAD<span style="color:var(--green);">MAP</span>
+        </h2>
+      </div>
+
+      <!-- Timeline visuelle desktop -->
+      <div class="fade-in hidden md:flex items-center justify-between mb-8">
+
+        <!-- ÉTAPE 1 -->
+        <div class="road-step flex-none w-44">
+          <div class="road-node" style="background:rgba(0,255,157,.1);border-color:var(--green);color:var(--green);">
+            <i class="fa-solid fa-graduation-cap"></i>
+          </div>
+          <div class="text-center mt-3">
+            <div class="font-display text-xs font-bold text-white">LYCÉE</div>
+            <div class="text-xs mt-1" style="color:var(--dim);">Maintenant</div>
+            <div class="text-xs mt-2 px-3 py-1 rounded" style="background:rgba(0,255,157,.08);color:var(--green);border:1px solid rgba(0,255,157,.2);">
+              ✓ EN COURS
+            </div>
+          </div>
+        </div>
+
+        <!-- Connecteur 1 -->
+        <div class="road-connector flex-1 mx-4"></div>
+
+        <!-- ÉTAPE 2 -->
+        <div class="road-step flex-none w-44">
+          <div class="road-node" style="background:rgba(0,212,255,.1);border-color:var(--blue);color:var(--blue);">
+            <i class="fa-solid fa-network-wired"></i>
+          </div>
+          <div class="text-center mt-3">
+            <div class="font-display text-xs font-bold text-white">BUT R&T</div>
+            <div class="text-xs mt-1" style="color:var(--dim);">Réseaux & Télécoms</div>
+            <div class="text-xs mt-2 px-3 py-1 rounded" style="background:rgba(0,212,255,.08);color:var(--blue);border:1px solid rgba(0,212,255,.2);">
+              ○ OBJECTIF
+            </div>
+          </div>
+        </div>
+
+        <!-- Connecteur 2 -->
+        <div class="road-connector flex-1 mx-4"></div>
+
+        <!-- ÉTAPE 3 -->
+        <div class="road-step flex-none w-44">
+          <div class="road-node" style="background:rgba(251,146,60,.1);border-color:#fb923c;color:#fb923c;">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <div class="text-center mt-3">
+            <div class="font-display text-xs font-bold text-white">ÉCOLE INGÉNIEUR</div>
+            <div class="text-xs mt-1" style="color:var(--dim);">Cybersécurité</div>
+            <div class="text-xs mt-2 px-3 py-1 rounded" style="background:rgba(251,146,60,.08);color:#fb923c;border:1px solid rgba(251,146,60,.2);">
+              ● OBJECTIF
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Timeline mobile -->
+      <div class="fade-in flex md:hidden flex-col gap-0 mb-8">
+
+        <div class="flex items-center gap-4 pb-8">
+          <div class="flex flex-col items-center">
+            <div class="road-node w-12 h-12 text-lg" style="background:rgba(0,255,157,.1);border-color:var(--green);color:var(--green);">
+              <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <div class="w-px flex-1 mt-2" style="background:linear-gradient(to bottom, var(--green), var(--blue));min-height:50px;"></div>
+          </div>
+          <div>
+            <div class="font-display text-sm font-bold text-white">LYCÉE</div>
+            <div class="text-xs mt-1" style="color:var(--dim);">Actuellement — Passionné · CTF Player</div>
+            <span class="inline-block mt-2 text-xs px-2 py-1 rounded" style="background:rgba(0,255,157,.08);color:var(--green);border:1px solid rgba(0,255,157,.2);">✓ EN COURS</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4 pb-8">
+          <div class="flex flex-col items-center">
+            <div class="road-node w-12 h-12 text-lg" style="background:rgba(0,212,255,.1);border-color:var(--blue);color:var(--blue);">
+              <i class="fa-solid fa-network-wired"></i>
+            </div>
+            <div class="w-px flex-1 mt-2" style="background:linear-gradient(to bottom, var(--blue), #fb923c);min-height:50px;"></div>
+          </div>
+          <div>
+            <div class="font-display text-sm font-bold text-white">BUT Réseaux & Télécoms</div>
+            <div class="text-xs mt-1" style="color:var(--dim);">Protocoles · Administration · Sécurité réseau</div>
+            <span class="inline-block mt-2 text-xs px-2 py-1 rounded" style="background:rgba(0,212,255,.08);color:var(--blue);border:1px solid rgba(0,212,255,.2);">○ OBJECTIF</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <div class="road-node w-12 h-12 text-lg flex-none" style="background:rgba(251,146,60,.1);border-color:#fb923c;color:#fb923c;">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <div>
+            <div class="font-display text-sm font-bold text-white">École d'Ingénieur — Cybersécurité</div>
+            <div class="text-xs mt-1" style="color:var(--dim);">Pentest · Red Team · Architecture Sécurisée</div>
+            <span class="inline-block mt-2 text-xs px-2 py-1 rounded" style="background:rgba(251,146,60,.08);color:#fb923c;border:1px solid rgba(251,146,60,.2);">● OBJECTIF FINAL</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Info cards sous la roadmap -->
+      <div class="fade-in grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+        <div class="p-4 rounded-lg border" style="background:#0d1117;border-color:rgba(0,255,157,.15);">
+          <div class="font-display text-xs font-bold mb-2" style="color:var(--green);">// ACTUELLEMENT</div>
+          <p class="text-xs" style="color:var(--dim);">Terminale · Autoformation CTF · Veille sécu · Scripting Python & Bash</p>
+        </div>
+        <div class="p-4 rounded-lg border" style="background:#0d1117;border-color:rgba(0,212,255,.15);">
+          <div class="font-display text-xs font-bold mb-2" style="color:var(--blue);">// BUT R&T</div>
+          <p class="text-xs" style="color:var(--dim);">Cisco · Stormshield · VPN · Virtualisation · Administration systèmes</p>
+        </div>
+        <div class="p-4 rounded-lg border" style="background:#0d1117;border-color:rgba(251,146,60,.15);">
+          <div class="font-display text-xs font-bold mb-2" style="color:#fb923c;">// ÉCOLE INGÉNIEUR</div>
+          <p class="text-xs" style="color:var(--dim);">Pentest avancé · SOC · Malware analysis · Architecture Zero Trust</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SECTION SKILLS
+  ══════════════════════════════════════════ -->
+  <section id="skills" class="px-4">
+    <div class="max-w-5xl mx-auto">
+
+      <div class="fade-in mb-14 text-center">
+        <p class="text-xs tracking-widest mb-2" style="color:var(--green);">// STACK TECHNIQUE</p>
+        <h2 class="font-display font-bold text-3xl md:text-4xl text-white">
+          TECH <span style="color:var(--green);">SKILLS</span>
+        </h2>
+      </div>
+
+      <div class="fade-in grid grid-cols-1 md:grid-cols-2 gap-8">
+
+        <!-- Réseaux -->
+        <div class="p-6 rounded-lg border card-hover" style="background:#0d1117;border-color:var(--border);">
+          <div class="flex items-center gap-3 mb-5">
+            <div class="w-10 h-10 rounded flex items-center justify-center" style="background:rgba(0,212,255,.1);">
+              <i class="fa-solid fa-network-wired" style="color:var(--blue);"></i>
+            </div>
+            <div>
+              <div class="font-display text-sm font-bold text-white">RÉSEAUX & ANALYSE</div>
+              <div class="text-xs" style="color:var(--dim);">Cisco · Protocoles · Capture trafic</div>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <span class="badge" style="background:rgba(0,212,255,.08);border-color:rgba(0,212,255,.3);color:var(--blue);">Wireshark</span>
+            <span class="badge" style="background:rgba(0,212,255,.08);border-color:rgba(0,212,255,.3);color:var(--blue);">Nmap</span>
+            <span class="badge" style="background:rgba(0,212,255,.08);border-color:rgba(0,212,255,.3);color:var(--blue);">Cisco IOS</span>
+            <span class="badge" style="background:rgba(0,212,255,.08);border-color:rgba(0,212,255,.3);color:var(--blue);">tcpdump</span>
+            <span class="badge" style="background:rgba(0,212,255,.08);border-color:rgba(0,212,255,.3);color:var(--blue);">Packet Tracer</span>
+            <span class="badge" style="background:rgba(0,212,255,.08);border-color:rgba(0,212,255,.3);color:var(--blue);">netcat</span>
+          </div>
+        </div>
+
+        <!-- Pentest & CTF -->
+        <div class="p-6 rounded-lg border card-hover" style="background:#0d1117;border-color:var(--border);">
+          <div class="flex items-center gap-3 mb-5">
+            <div class="w-10 h-10 rounded flex items-center justify-center" style="background:rgba(0,255,157,.1);">
+              <i class="fa-solid fa-skull-crossbones" style="color:var(--green);"></i>
+            </div>
+            <div>
+              <div class="font-display text-sm font-bold text-white">PENTEST & CTF</div>
+              <div class="text-xs" style="color:var(--dim);">Kali · Exploitation · Recon</div>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <span class="badge" style="background:rgba(0,255,157,.08);border-color:rgba(0,255,157,.3);color:var(--green);">Burp Suite</span>
+            <span class="badge" style="background:rgba(0,255,157,.08);border-color:rgba(0,255,157,.3);color:var(--green);">Metasploit</span>
+            <span class="badge" style="background:rgba(0,255,157,.08);border-color:rgba(0,255,157,.3);color:var(--green);">Gobuster</span>
+            <span class="badge" style="background:rgba(0,255,157,.08);border-color:rgba(0,255,157,.3);color:var(--green);">Hydra</span>
+            <span class="badge" style="background:rgba(0,255,157,.08);border-color:rgba(0,255,157,.3);color:var(--green);">SQLmap</span>
+            <span class="badge" style="background:rgba(0,255,157,.08);border-color:rgba(0,255,157,.3);color:var(--green);">Hashcat</span>
+            <span class="badge" style="background:rgba(0,255,157,.08);border-color:rgba(0,255,157,.3);color:var(--green);">John the Ripper</span>
+          </div>
+        </div>
+
+        <!-- Forensics & OSINT -->
+        <div class="p-6 rounded-lg border card-hover" style="background:#0d1117;border-color:var(--border);">
+          <div class="flex items-center gap-3 mb-5">
+            <div class="w-10 h-10 rounded flex items-center justify-center" style="background:rgba(168,85,247,.1);">
+              <i class="fa-solid fa-magnifying-glass" style="color:#a855f7;"></i>
+            </div>
+            <div>
+              <div class="font-display text-sm font-bold text-white">FORENSICS & OSINT</div>
+              <div class="text-xs" style="color:var(--dim);">Analyse · Stéganographie · Investigation</div>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <span class="badge" style="background:rgba(168,85,247,.08);border-color:rgba(168,85,247,.3);color:#a855f7;">Exiftool</span>
+            <span class="badge" style="background:rgba(168,85,247,.08);border-color:rgba(168,85,247,.3);color:#a855f7;">Steghide</span>
+            <span class="badge" style="background:rgba(168,85,247,.08);border-color:rgba(168,85,247,.3);color:#a855f7;">Binwalk</span>
+            <span class="badge" style="background:rgba(168,85,247,.08);border-color:rgba(168,85,247,.3);color:#a855f7;">Volatility</span>
+            <span class="badge" style="background:rgba(168,85,247,.08);border-color:rgba(168,85,247,.3);color:#a855f7;">CyberChef</span>
+            <span class="badge" style="background:rgba(168,85,247,.08);border-color:rgba(168,85,247,.3);color:#a855f7;">strings</span>
+            <span class="badge" style="background:rgba(168,85,247,.08);border-color:rgba(168,85,247,.3);color:#a855f7;">file / hexdump</span>
+          </div>
+        </div>
+
+        <!-- Scripting & Dev -->
+        <div class="p-6 rounded-lg border card-hover" style="background:#0d1117;border-color:var(--border);">
+          <div class="flex items-center gap-3 mb-5">
+            <div class="w-10 h-10 rounded flex items-center justify-center" style="background:rgba(251,146,60,.1);">
+              <i class="fa-brands fa-python" style="color:#fb923c;"></i>
+            </div>
+            <div>
+              <div class="font-display text-sm font-bold text-white">SCRIPTING & DEV</div>
+              <div class="text-xs" style="color:var(--dim);">Python · Bash · Automatisation</div>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <span class="badge" style="background:rgba(251,146,60,.08);border-color:rgba(251,146,60,.3);color:#fb923c;">Python</span>
+            <span class="badge" style="background:rgba(251,146,60,.08);border-color:rgba(251,146,60,.3);color:#fb923c;">Bash</span>
+            <span class="badge" style="background:rgba(251,146,60,.08);border-color:rgba(251,146,60,.3);color:#fb923c;">pwntools</span>
+            <span class="badge" style="background:rgba(251,146,60,.08);border-color:rgba(251,146,60,.3);color:#fb923c;">Git / GitHub</span>
+            <span class="badge" style="background:rgba(251,146,60,.08);border-color:rgba(251,146,60,.3);color:#fb923c;">Docker</span>
+            <span class="badge" style="background:rgba(251,146,60,.08);border-color:rgba(251,146,60,.3);color:#fb923c;">GDB / Ghidra</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       INFORMATIQUE QUANTIQUE & CYBER
+  ══════════════════════════════════════════ -->
+  <section id="quantum" class="px-4">
+    <div class="max-w-5xl mx-auto">
+
+      <div class="fade-in mb-14 text-center">
+        <p class="text-xs tracking-widest mb-2" style="color:var(--green);">// QUANTUM × CYBERSECURITY</p>
+        <h2 class="font-display font-bold text-3xl md:text-4xl text-white mb-4">
+          INFORMATIQUE <span style="color:var(--blue);">QUANTIQUE</span>
+        </h2>
+        <p class="text-sm max-w-2xl mx-auto" style="color:var(--dim);">
+          La quantique n'est pas qu'une curiosité physique : elle redéfinit déjà la cybersécurité.
+          De la menace sur RSA/ECC (algorithme de Shor) à la cryptographie post-quantique (PQC),
+          c'est un axe que je creuse en parallèle de mes CTF et de ma formation cyber.
+        </p>
+      </div>
+
+      <div class="fade-in grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 items-stretch">
+
+        <!-- Infos fusionnées -->
+        <div class="p-8 md:p-10 rounded-lg border card-hover flex flex-col justify-center min-h-[320px]"
+             style="background:#0d1117;border-color:rgba(34,211,238,.25);">
+          <div class="flex items-center gap-4 mb-8">
+            <div class="w-14 h-14 rounded flex items-center justify-center flex-shrink-0" style="background:rgba(34,211,238,.1);">
+              <i class="fa-solid fa-atom text-2xl" style="color:#22d3ee;"></i>
+            </div>
+            <div>
+              <div class="font-display text-lg md:text-xl font-bold text-white tracking-wide">QUANTIQUE × CYBER</div>
+              <div class="text-sm md:text-base mt-1" style="color:var(--dim);">Sécurité de l'information &amp; calcul quantique</div>
+            </div>
+          </div>
+          <ul class="text-sm md:text-base space-y-5 md:space-y-6 flex-1 leading-relaxed" style="color:#a8b4c4;">
+            <li><span class="font-bold mr-1" style="color:#22d3ee;">→</span> Menace quantique sur le chiffrement asymétrique (RSA, ECC, Diffie-Hellman) et migration vers la cryptographie post-quantique (NIST PQC)</li>
+            <li><span class="font-bold mr-1" style="color:#22d3ee;">→</span> Distribution quantique de clés (QKD) · stratégie <em>harvest now, decrypt later</em></li>
+            <li><span class="font-bold mr-1" style="color:#a78bfa;">→</span> Qubits, superposition, intrication · création de portes logiques (Pauli, Hadamard, CNOT, Toffoli…)</li>
+            <li><span class="font-bold mr-1" style="color:#a78bfa;">→</span> Circuits quantiques &amp; simulation Qiskit · maîtrise des calculs mathématiques avancés</li>
+          </ul>
+        </div>
+
+        <!-- Sphère de Bloch -->
+        <div class="p-4 md:p-6 rounded-lg border flex flex-col items-center justify-center overflow-hidden"
+             style="background:#0d1117;border-color:rgba(139,92,246,.25);min-height:320px;">
+          <p class="text-xs tracking-widest mb-3 self-start" style="color:var(--dim);">// BLOCH SPHERE</p>
+          <svg class="bloch-sphere w-full max-w-[340px] h-auto" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sphère de Bloch — représentation d'un qubit">
+            <defs>
+              <radialGradient id="blochSphereGrad" cx="38%" cy="32%" r="62%">
+                <stop offset="0%" stop-color="#1a2a3a"/>
+                <stop offset="55%" stop-color="#0d1520"/>
+                <stop offset="100%" stop-color="#060a0f"/>
+              </radialGradient>
+              <linearGradient id="blochRim" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#22d3ee" stop-opacity=".55"/>
+                <stop offset="50%" stop-color="#a78bfa" stop-opacity=".35"/>
+                <stop offset="100%" stop-color="#00ff9d" stop-opacity=".45"/>
+              </linearGradient>
+              <linearGradient id="vectorGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#00ff9d"/>
+                <stop offset="100%" stop-color="#22d3ee"/>
+              </linearGradient>
+              <filter id="blochGlow" x="-40%" y="-40%" width="180%" height="180%">
+                <feGaussianBlur stdDeviation="3" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <filter id="labelGlow">
+                <feGaussianBlur stdDeviation="1.2" result="b"/>
+                <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+
+            <!-- Fond elliptique ombre -->
+            <ellipse cx="200" cy="212" rx="118" ry="28" fill="rgba(0,255,157,.04)" stroke="rgba(0,255,157,.08)" stroke-width="1"/>
+
+            <!-- Sphère principale -->
+            <circle cx="200" cy="200" r="130" fill="url(#blochSphereGrad)" stroke="url(#blochRim)" stroke-width="1.5"/>
+
+            <!-- Méridien arrière (ellipse verticale) -->
+            <ellipse cx="200" cy="200" rx="42" ry="130" fill="none" stroke="rgba(34,211,238,.18)" stroke-width="1" stroke-dasharray="4 5"/>
+
+            <!-- Équateur -->
+            <ellipse cx="200" cy="200" rx="130" ry="42" fill="none" stroke="rgba(167,139,250,.28)" stroke-width="1"/>
+
+            <!-- Méridien avant -->
+            <ellipse cx="200" cy="200" rx="130" ry="42" fill="none" stroke="rgba(34,211,238,.22)" stroke-width="1" transform="rotate(90 200 200)"/>
+
+            <!-- Parallèles -->
+            <ellipse cx="200" cy="128" rx="88" ry="22" fill="none" stroke="rgba(139,92,246,.12)" stroke-width=".8"/>
+            <ellipse cx="200" cy="272" rx="88" ry="22" fill="none" stroke="rgba(139,92,246,.12)" stroke-width=".8"/>
+            <ellipse cx="200" cy="164" rx="112" ry="32" fill="none" stroke="rgba(34,211,238,.1)" stroke-width=".6"/>
+            <ellipse cx="200" cy="236" rx="112" ry="32" fill="none" stroke="rgba(34,211,238,.1)" stroke-width=".6"/>
+
+            <!-- Axes Z (vertical) -->
+            <line x1="200" y1="52" x2="200" y2="348" stroke="rgba(139,92,246,.35)" stroke-width="1" stroke-dasharray="3 4"/>
+            <!-- Axe X -->
+            <line x1="58" y1="200" x2="342" y2="200" stroke="rgba(0,255,157,.2)" stroke-width=".8" stroke-dasharray="2 5"/>
+            <!-- Axe Y (perspective) -->
+            <line x1="108" y1="108" x2="292" y2="292" stroke="rgba(0,212,255,.15)" stroke-width=".8" stroke-dasharray="2 5"/>
+
+            <!-- Pôles -->
+            <circle cx="200" cy="70" r="5" fill="#a78bfa" filter="url(#blochGlow)"/>
+            <circle cx="200" cy="330" r="5" fill="#22d3ee" filter="url(#blochGlow)"/>
+
+            <!-- Points équatoriaux -->
+            <circle cx="330" cy="200" r="3.5" fill="#00ff9d" opacity=".9"/>
+            <circle cx="70" cy="200" r="3.5" fill="#00ff9d" opacity=".9"/>
+            <circle cx="200" cy="58" r="3" fill="rgba(167,139,250,.5)"/>
+            <circle cx="200" cy="342" r="3" fill="rgba(34,211,238,.5)"/>
+
+            <!-- Vecteur d'état |ψ⟩ (superposition) -->
+            <line x1="200" y1="200" x2="248" y2="118" stroke="url(#vectorGrad)" stroke-width="2.5" stroke-linecap="round" filter="url(#blochGlow)"/>
+            <polygon points="248,118 240,128 252,124" fill="#00ff9d"/>
+            <circle cx="200" cy="200" r="4" fill="#080c10" stroke="#00ff9d" stroke-width="1.5"/>
+
+            <!-- Labels états -->
+            <g font-family="'JetBrains Mono', monospace" font-size="15" font-weight="600" filter="url(#labelGlow)">
+              <text x="200" y="48" text-anchor="middle" fill="#e9d5ff">|1⟩</text>
+              <text x="200" y="368" text-anchor="middle" fill="#22d3ee">|0⟩</text>
+              <text x="352" y="206" text-anchor="start" fill="#00ff9d">|+⟩</text>
+              <text x="48" y="206" text-anchor="end" fill="#00ff9d">|−⟩</text>
+              <text x="268" y="100" text-anchor="middle" fill="#c4b5fd" font-size="12" opacity=".85">|ψ⟩</text>
+            </g>
+
+            <!-- Labels axes -->
+            <g font-family="'JetBrains Mono', monospace" font-size="11" fill="#6e7f96" letter-spacing=".08em">
+              <text x="200" y="36" text-anchor="middle">Z</text>
+              <text x="358" y="204" text-anchor="middle">X</text>
+              <text x="88" y="88" text-anchor="middle">Y</text>
+            </g>
+
+            <!-- Légende discrète -->
+            <text x="200" y="392" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="10" fill="#4a5568" letter-spacing=".12em">REPRESENTATION D&apos;UN QUBIT</text>
+          </svg>
+        </div>
+
+      </div>
+
+      <div class="fade-in">
+        <p class="text-xs tracking-widest mb-4" style="color:var(--dim);">// COMPÉTENCES QUANTIQUES</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="badge" style="background:rgba(34,211,238,.08);border-color:rgba(34,211,238,.3);color:#22d3ee;">Portes quantiques</span>
+          <span class="badge" style="background:rgba(34,211,238,.08);border-color:rgba(34,211,238,.3);color:#22d3ee;">Circuits quantiques</span>
+          <span class="badge" style="background:rgba(139,92,246,.08);border-color:rgba(139,92,246,.3);color:#a78bfa;">Qiskit</span>
+          <span class="badge" style="background:rgba(139,92,246,.08);border-color:rgba(139,92,246,.3);color:#a78bfa;">Algèbre linéaire</span>
+          <span class="badge" style="background:rgba(0,255,157,.08);border-color:rgba(0,255,157,.3);color:var(--green);">Post-Quantum Crypto</span>
+          <span class="badge" style="background:rgba(0,255,157,.08);border-color:rgba(0,255,157,.3);color:var(--green);">Shor / Grover</span>
+          <span class="badge" style="background:rgba(0,212,255,.08);border-color:rgba(0,212,255,.3);color:var(--blue);">NIST PQC</span>
+          <span class="badge" style="background:rgba(251,146,60,.08);border-color:rgba(251,146,60,.3);color:#fb923c;">Probabilités &amp; stats</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       HALL OF FAME — CERTIFICATIONS & SCORES
+  ══════════════════════════════════════════ -->
+  <section id="certifs" class="px-4 mt-20">
+    <div class="max-w-5xl mx-auto">
+
+      <div class="fade-in mb-14 text-center">
+        <p class="text-xs tracking-widest mb-2" style="color:var(--green);">// RECONNAISSANCE & ACHIEVEMENTS</p>
+        <h2 class="font-display font-bold text-3xl md:text-4xl text-white">
+          HALL OF <span style="color:var(--green);">FAME</span>
+        </h2>
+      </div>
+
+      <!-- Scores platforms -->
+      <div class="fade-in grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+
+        <!-- Root-Me -->
+        <div class="p-6 rounded-lg border text-center card-hover" style="background:#0d1117;border-color:rgba(0,255,157,.25);">
+          <div class="font-display font-black text-4xl mb-1" style="color:var(--green);">TOP 2%</div>
+          <div class="text-xs tracking-widest font-bold mb-1" style="color:var(--dim);">Root Me</div>
+          <div class="flex items-center justify-center gap-2 mt-3">
+            <i class="fa-solid fa-trophy text-sm" style="color:var(--green);"></i>
+            <span class="font-display text-xs font-bold text-white">french forever</span>
+          </div>
+        </div>
+
+        <!-- CTFtime Team -->
+        <div class="p-6 rounded-lg border text-center card-hover" style="background:#0d1117;border-color:rgba(0,212,255,.25);">
+          <div class="font-display font-black text-4xl mb-1" style="color:var(--blue);">TOP 2</div>
+          <div class="text-xs tracking-widest font-bold mb-1" style="color:var(--dim);">FRANCE</div>
+          <div class="flex items-center justify-center gap-2 mt-3">
+            <i class="fa-solid fa-flag text-sm" style="color:var(--blue);"></i>
+            <span class="font-display text-xs font-bold text-white">CTFTIME</span>
+          </div>
+          <p class="text-xs mt-2" style="color:var(--dim);">Classement équipe nationale</p>
+        </div>
+
+        <!-- TryHackMe -->
+        <div class="p-6 rounded-lg border text-center card-hover" style="background:#0d1117;border-color:rgba(168,85,247,.25);">
+          <div class="font-display font-black text-4xl mb-1" style="color:#a855f7;">TOP 5%</div>
+          <div class="text-xs tracking-widest font-bold mb-1" style="color:var(--dim);">TryHackMe</div>
+          <div class="flex items-center justify-center gap-2 mt-3">
+            <i class="fa-solid fa-moon text-sm" style="color:#a855f7;"></i>
+            <span class="font-display text-xs font-bold text-white">roadmap enjoyer</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Certifications -->
+      <div class="fade-in">
+        <p class="text-xs tracking-widest mb-6" style="color:var(--dim);">// CERTIFICATIONS</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+          <!-- TryHackMe Pre Security -->
+          <div class="p-5 rounded-lg border card-hover" style="background:#0d1117;border-color:rgba(0,255,157,.2);">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded flex items-center justify-center flex-shrink-0"
+                   style="background:rgba(0,255,157,.1);border:1px solid rgba(0,255,157,.25);">
+                <i class="fa-solid fa-shield-halved" style="color:var(--green);"></i>
+              </div>
+              <div>
+                <div class="font-display text-xs font-bold text-white">PRE SECURITY</div>
+                <div class="text-xs" style="color:var(--dim);">TryHackMe</div>
+              </div>
+            </div>
+            <p class="text-xs mb-3" style="color:#6e7f96;">Learning Path · basic networking · Octobre 2025</p>
+            <div class="flex items-center gap-2">
+              <span class="badge text-xs" style="background:rgba(0,255,157,.08);border-color:rgba(0,255,157,.3);color:var(--green);">
+                <i class="fa-solid fa-certificate text-xs"></i> COMPLÉTÉ
+              </span>
+            </div>
+          </div>
+
+          <!-- TryHackMe Cybersecurity 101 -->
+          <div class="p-5 rounded-lg border card-hover" style="background:#0d1117;border-color:rgba(0,212,255,.2);">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded flex items-center justify-center flex-shrink-0"
+                   style="background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.25);">
+                <i class="fa-solid fa-lock" style="color:var(--blue);"></i>
+              </div>
+              <div>
+                <div class="font-display text-xs font-bold text-white">CYBERSECURITY 101</div>
+                <div class="text-xs" style="color:var(--dim);">TryHackMe</div>
+              </div>
+            </div>
+            <p class="text-xs mb-3" style="color:#6e7f96;">Learning Path · Fondamentaux cyber</p>
+            <div class="flex items-center gap-2">
+              <span class="badge text-xs" style="background:rgba(0,212,255,.08);border-color:rgba(0,212,255,.3);color:var(--blue);">
+                <i class="fa-solid fa-certificate text-xs"></i> COMPLÉTÉ
+              </span>
+            </div>
+          </div>
+
+          <!-- AI Security -->
+          <div class="p-5 rounded-lg border card-hover" style="background:#0d1117;border-color:rgba(250,204,21,.2);">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded flex items-center justify-center flex-shrink-0"
+                   style="background:rgba(250,204,21,.1);border:1px solid rgba(250,204,21,.25);">
+                <i class="fa-solid fa-robot" style="color:#facc15;"></i>
+              </div>
+              <div>
+                <div class="font-display text-xs font-bold text-white">AI SECURITY</div>
+                <div class="text-xs" style="color:var(--dim);">TryHackMe</div>
+              </div>
+            </div>
+            <p class="text-xs mb-3" style="color:#6e7f96;">Learning Path · Sécurité des modèles IA &amp; LLM</p>
+            <div class="flex items-center gap-2">
+              <span class="badge text-xs" style="background:rgba(250,204,21,.08);border-color:rgba(250,204,21,.3);color:#facc15;">
+                <i class="fa-solid fa-certificate text-xs"></i> COMPLÉTÉ
+              </span>
+            </div>
+          </div>
+
+          <!-- Midnight Flag -->
+          <div class="p-5 rounded-lg border card-hover" style="background:#0d1117;border-color:rgba(168,85,247,.2);">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded flex items-center justify-center flex-shrink-0"
+                   style="background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.25);">
+                <i class="fa-solid fa-moon" style="color:#a855f7;"></i>
+              </div>
+              <div>
+                <div class="font-display text-xs font-bold text-white">MIDNIGHT FLAG CTF</div>
+                <div class="text-xs" style="color:var(--dim);">2026 · Certificat de compétition</div>
+              </div>
+            </div>
+            <p class="text-xs mb-3" style="color:#6e7f96;">26ème place mondiale · Team spYCTF</p>
+            <div class="flex items-center gap-2">
+              <span class="badge text-xs" style="background:rgba(168,85,247,.08);border-color:rgba(168,85,247,.3);color:#a855f7;">
+                <i class="fa-solid fa-trophy text-xs"></i> TOP 26
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       FOOTER
+  ══════════════════════════════════════════ -->
+  <footer class="mt-20 border-t px-4 py-12" style="border-color:var(--border);">
+    <div class="max-w-5xl mx-auto">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-8">
+
+        <!-- Signature -->
+        <div>
+          <div class="font-display font-black text-xl mb-1" style="color:var(--green);">EOGHAN</div>
+          <p class="text-xs" style="color:var(--dim);">
+            Futur Ingénieur Cybersécurité · Loire-Atlantique (44) · 18 ans
+          </p>
+        </div>
+
+        <!-- Liens -->
+        <div class="flex items-center gap-4">
+          <a href="https://github.com/" target="_blank"
+             class="flex items-center gap-2 px-5 py-3 rounded border text-xs tracking-widest transition-all duration-300"
+             style="border-color:var(--border);color:var(--dim);"
+             onmouseover="this.style.borderColor='var(--green)';this.style.color='var(--green)'"
+             onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--dim)'">
+            <i class="fa-brands fa-github text-base"></i>
+            GitHub
+          </a>
+          <a href="https://ctftime.org/" target="_blank"
+             class="flex items-center gap-2 px-5 py-3 rounded border text-xs tracking-widest transition-all duration-300"
+             style="border-color:var(--border);color:var(--dim);"
+             onmouseover="this.style.borderColor='var(--blue)';this.style.color='var(--blue)'"
+             onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--dim)'">
+            <i class="fa-solid fa-flag text-base"></i>
+            CTFtime
+          </a>
+        </div>
+
+      </div>
+
+      <div class="mt-8 pt-8 border-t text-center text-xs" style="border-color:var(--border);color:var(--dim);">
+        <span style="color:var(--green);">root@eoghan</span>:<span style="color:var(--blue);">~</span>$ echo "Keep hacking, keep learning." &nbsp;·&nbsp; 2026
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- ══════════════════════════════════════════
+       JAVASCRIPT
+  ══════════════════════════════════════════ -->
+  <script>
+    /* ─────────────────────────────
+       TERMINAL — Simulation de frappe
+    ───────────────────────────── */
+    const termLines = [
+      // [type, prompt, command, output]
+      ['cmd', '$ ', 'whoami'],
+      ['out', '',   '',  '→  <span class="hi">Eoghan</span>, 18 ans, Loire-Atlantique (44)'],
+      ['gap'],
+      ['cmd', '$ ', 'status'],
+      ['out', '',   '',  '→  Étudiant passionné · <span class="hi">CTF Player</span> · Team FR Top 2'],
+      ['gap'],
+      ['cmd', '$ ', 'interests'],
+      ['out', '',   '',  '→  Offensive security · <span class="hi">Informatique quantique</span> · Post-quantum crypto'],
+      ['gap'],
+      ['cmd', '$ ', 'target'],
+      ['out', '',   '',  '→  BUT Réseaux &amp; Télécoms <span class="hi">▸</span> École Ingénieur Cybersécurité'],
+      ['gap'],
+      ['cursor'],
+    ];
+
+    const termBody = document.getElementById('termBody');
+
+    function buildTerminal() {
+      let delay = 0;
+      termLines.forEach(line => {
+        if (line[0] === 'gap') {
+          setTimeout(() => {
+            const el = document.createElement('div');
+            el.style.height = '8px';
+            termBody.appendChild(el);
+          }, delay);
+          delay += 60;
+          return;
+        }
+        if (line[0] === 'cursor') {
+          setTimeout(() => {
+            const el = document.createElement('div');
+            el.innerHTML = `<span class="prompt">$ </span><span class="cursor"></span>`;
+            termBody.appendChild(el);
+          }, delay);
+          return;
+        }
+        if (line[0] === 'cmd') {
+          const text = line[2];
+          setTimeout(() => {
+            const el = document.createElement('div');
+            el.innerHTML = `<span class="prompt">${line[1]}</span><span class="cmd"></span>`;
+            termBody.appendChild(el);
+            // frappe caractère par caractère
+            const span = el.querySelector('.cmd');
+            let i = 0;
+            const type = setInterval(() => {
+              if (i < text.length) { span.textContent += text[i++]; }
+              else clearInterval(type);
+            }, 55);
+          }, delay);
+          delay += text.length * 55 + 200;
+        }
+        if (line[0] === 'out') {
+          const outText = line[3];
+          setTimeout(() => {
+            const el = document.createElement('div');
+            el.classList.add('out');
+            el.innerHTML = outText;
+            termBody.appendChild(el);
+          }, delay);
+          delay += 180;
+        }
+      });
+    }
+    buildTerminal();
+
+
+    /* ─────────────────────────────
+       SCROLL — Fade-in & skill bars
+    ───────────────────────────── */
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+
+          // Animer les skill bars dans cet élément
+          entry.target.querySelectorAll('.skill-bar-fill').forEach(bar => {
+            setTimeout(() => bar.classList.add('animated'), 200);
+          });
+        }
+      });
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+  </script>
+
+</body>
+</html>
